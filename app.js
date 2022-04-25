@@ -25,12 +25,72 @@ class Point{
     }
 }
 
+class Map {
+    constructor(width, height){
+        this.width = width;
+        this.height = height;
+        // should use this.saliency(y,x); x indicates col, so should go second
+        this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(0));
+        this.regions = {};
+        this.num_regions = 1;
+    }
+
+    connectPoints(x1,y1,x2,y2) {
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        if( dx < 0 & dy < 0) {
+            let temp = x1;
+            x1 = x2;
+            x2 = temp;
+            temp = y1;
+            y1 = y2;
+            y2 = temp;
+            dx = x2 - x1;
+            dy = y2-y1;
+        }
+        let steps = dx>dy ? dx : dy;
+        let xinc = dx/steps;
+        let yinc = dy/steps;
+        console.log(`dx: ${dx}; dy: ${dy}`);
+        let x = x1;
+        let y = y1;
+        for (let i = 0; i<steps+1; i++){
+            // console.log(`(${x}, ${y})`);
+            // console.log(`trying to change ${this.saliency[parseInt(y)][parseInt(x)]}`);
+            this.saliency[parseInt(y)][parseInt(x)] = 1;
+            x+=xinc;
+            y+=yinc;
+        }
+    }
+
+    push(region){
+        this.regions[this.num_regions] = region;
+        console.log(region.points);
+        this.num_regions++;
+        for (let i=0; i< region.points.length; i++){
+            // console.log(`Currently starting with point ${i}`);
+            this.connectPoints(region.points[i][0], region.points[i][1], region.points[(i+1)%region.points.length][0], region.points[(i+1)%region.points.length][1]);
+        }
+    }
+
+    fill(ctx, x, y){
+        console.log("Not made yet!");
+    }
+}
+
 const canvas = document.querySelector("#saliency_map");
 const ctx = canvas.getContext("2d");
 const imageInput = document.querySelector("#imageInput");
 
 const start_button = document.querySelector("#start");
 const finish_button = document.querySelector("#finish");
+const fill_button = document.querySelector("#fill");
+
+console.log(getComputedStyle(canvas)['height']);
+console.log(getComputedStyle(canvas)['width']);
+canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
+canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
+console.log(canvas.height,canvas.width);
 
 imageInput.addEventListener("change", (e) => {
     if(e.target.files) {
@@ -61,10 +121,14 @@ imageInput.addEventListener("change", (e) => {
 });
 
 const allPoints = new Array();
+console.log(`Starting saliency map with width ${canvas.width} and height ${canvas.height}`);
+const saliency_map = new Map(canvas.width, canvas.height);
 let draw = false;
 
 start_button.addEventListener("dblclick", () => {addNewPoint()});
 finish_button.addEventListener("dblclick", () => {finishDrawing()});
+fill_button.addEventListener("dblclick", (e) => {fillRegion(e)});
+
 
 function addNewPoint() {
     current_point = new Point();
@@ -76,7 +140,16 @@ function finishDrawing() {
     console.log("hi");
     current_point = allPoints[allPoints.length-1];
     current_point.finish(ctx);
+    saliency_map.push(current_point);
     draw = false;
+}
+
+function fillRegion(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    console.log(`Filling area starting with point ${x}, ${y}.`);
+    saliency_map.fill(ctx, x, y);
 }
 
 // allowing user to draw on the canvas
@@ -114,11 +187,7 @@ window.addEventListener("resize", () => {
 
 })
 
-console.log(getComputedStyle(canvas)['height']);
-console.log(getComputedStyle(canvas)['width']);
-canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
-canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
-console.log(canvas.height,canvas.width);
+
 // ctx.putImageData(previous_canvas, 0,0);
 
 // Setup
