@@ -74,7 +74,20 @@ class Map {
     }
 
     fill(ctx, x, y){
-        console.log("Not made yet!");
+        x = parseInt(x);
+        y = parseInt(y);
+        if (this.saliency[y][x] == 1 || y < 0 || y > this.height-1 || x < 0 || x > this.width-1){
+            return;
+        }
+        else {
+            this.saliency[y][x] = 1;
+            ctx.fillRect(x,y,1,1);
+            this.fill(ctx, x+1, y);
+            this.fill(ctx, x-1, y);
+            this.fill(ctx, x, y+1);
+            this.fill(ctx, x, y-1);
+            return;
+        }
     }
 }
 
@@ -145,11 +158,7 @@ function finishDrawing() {
 }
 
 function fillRegion(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    console.log(`Filling area starting with point ${x}, ${y}.`);
-    saliency_map.fill(ctx, x, y);
+    fill = true;
 }
 
 // allowing user to draw on the canvas
@@ -162,6 +171,14 @@ canvas.addEventListener("click", (e) => {
         const y = e.clientY - rect.top;
         current_point= allPoints[allPoints.length - 1];
         current_point.draw(ctx,x,y);
+    }
+    else if (fill == true){
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        console.log(`Filling area starting with point ${x}, ${y}.`);
+        saliency_map.fill(ctx,x,y);
+        fill = false;
     }
 })
 
