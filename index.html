@@ -16,6 +16,17 @@
     <button id="start">Start Drawing</button>
     <button id="finish">Finish Drawing</button>
     <button id="fill">fill</button>
+    <button id="convert">convert</button>
+    <label for="method">Choose a method to stylize your image</label>
+    <select name="method" id="method">
+      <option value="none" selected disabled hidden>Select an Option</option>
+      <option value="Contrast">Contrast</option>
+      <option value="Saturation">Black and White</option>
+      <option value="Hatching">Hatching</option>
+      <option value="Blurring">Blurring</option>
+    </select>
+    <canvas id="output_image"></canvas>
     <script src="app.js"></script>
+    <script async src="opencv.js" type="text/javascript"></script>
 </body>
 </html>

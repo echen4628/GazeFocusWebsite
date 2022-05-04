@@ -1,3 +1,14 @@
+// Define a global variable 'Module' with a method 'onRuntimeInitialized':
+// Module = {
+//   onRuntimeInitialized() {
+//     // this is our application:
+//     console.log(cv.getBuildInformation())
+//   }
+// }
+// cv = require('./opencv.js')
+
+
+// -------------------- Start of Point class ---------------
 class Point{
     constructor(){
         this.points = new Array();
@@ -24,6 +35,8 @@ class Point{
 
     }
 }
+
+// ------------------- Start of Saliency Map class ---------------------
 
 class Map {
     constructor(width, height){
@@ -89,21 +102,48 @@ class Map {
             return;
         }
     }
+
+    blur() {
+        console.log("blurring");
+        let mat = cv.matFromArray(2, 2, cv.CV_8UC1, [1, 2, 3, 4]);
+    }
 }
 
+//------------- start of code --------------------
+// Getting elements
 const canvas = document.querySelector("#saliency_map");
 const ctx = canvas.getContext("2d");
 const imageInput = document.querySelector("#imageInput");
 
+const output = document.querySelector("#output_image");
+const output_ctx = output.getContext("2d");
+
 const start_button = document.querySelector("#start");
 const finish_button = document.querySelector("#finish");
 const fill_button = document.querySelector("#fill");
+const convert_button = document.querySelector('#convert');
 
+const method_menu = document.querySelector('#method');
+
+// Setting the size of canvas according to css
 console.log(getComputedStyle(canvas)['height']);
 console.log(getComputedStyle(canvas)['width']);
 canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
 canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
 console.log(canvas.height,canvas.width);
+
+output.height = getComputedStyle(output)['height'].slice(0,-2);
+output.width = getComputedStyle(output)['width'].slice(0,-2);
+
+// Creating buffers
+const allPoints = new Array();
+console.log(`Starting saliency map with width ${canvas.width} and height ${canvas.height}`);
+const saliency_map = new Map(canvas.width, canvas.height);
+let draw = false;
+
+// Input and output
+let original = new ImageData(canvas.width, canvas.height);
+
 
 imageInput.addEventListener("change", (e) => {
     if(e.target.files) {
@@ -122,7 +162,7 @@ imageInput.addEventListener("change", (e) => {
                 // canvas.height = image.height;
                 ctx.drawImage(image, 0, 0);
                 console.log(`canvas width is ${canvas.width} and canvas height is ${canvas.height}`);
-
+                original = ctx.getImageData(0,0,canvas.width, canvas.height);
 
                 // canvas.height = rect.top-rect.bot;
                 // console.log(`canvas width is ${canvas.width} and canvas height is ${canvas.height}`);
@@ -133,15 +173,14 @@ imageInput.addEventListener("change", (e) => {
     }
 });
 
-const allPoints = new Array();
-console.log(`Starting saliency map with width ${canvas.width} and height ${canvas.height}`);
-const saliency_map = new Map(canvas.width, canvas.height);
-let draw = false;
-
+// Setting up all buttons
 start_button.addEventListener("dblclick", () => {addNewPoint()});
 finish_button.addEventListener("dblclick", () => {finishDrawing()});
 fill_button.addEventListener("dblclick", (e) => {fillRegion(e)});
-
+convert_button.addEventListener("dblclick", ()=> {displayOutput()});
+method_menu.addEventListener("change", (e)=> {
+    console.log(method_menu.value);
+})
 
 function addNewPoint() {
     current_point = new Point();
@@ -159,6 +198,22 @@ function finishDrawing() {
 
 function fillRegion(e) {
     fill = true;
+}
+
+function displayOutput() {
+    console.log("display?!");
+    if (method_menu.value == "Contrast"){
+        console.log("contrast");
+    } else if (method_menu.value == "Saturation"){
+        console.log("saturation");
+    } else if (method_menu.value == "Hatching") {
+        console.log("hatching");
+    } else if (method_menu.value == "Blurring") {
+        console.log("blurring");
+    } else {
+        console.log(`${method_menu.value} has not been implemented`);
+    }
+    output_ctx.putImageData(original, 0, 0);
 }
 
 // allowing user to draw on the canvas
@@ -182,17 +237,6 @@ canvas.addEventListener("click", (e) => {
     }
 })
 
-// function drawPoint(canvas, event) 
-// {
-//     const rect = canvas.getBoundingClientRect();
-//     const x = event.clientX - rect.left;
-//     const y = event.clientY - rect.top;
-//     console.log(`x: ${x} y: ${y}`);
-//     ctx.lineTo(x,y);
-//     ctx.stroke();
-//     ctx.moveTo(x, y);
-//     previous_canvas = ctx.getImageData(0,0,canvas.width, canvas.height);
-// }
 
 window.addEventListener("resize", () => {
     console.log(getComputedStyle(canvas)['height']);
@@ -204,6 +248,17 @@ window.addEventListener("resize", () => {
 
 })
 
+// function drawPoint(canvas, event) 
+// {
+//     const rect = canvas.getBoundingClientRect();
+//     const x = event.clientX - rect.left;
+//     const y = event.clientY - rect.top;
+//     console.log(`x: ${x} y: ${y}`);
+//     ctx.lineTo(x,y);
+//     ctx.stroke();
+//     ctx.moveTo(x, y);
+//     previous_canvas = ctx.getImageData(0,0,canvas.width, canvas.height);
+// }
 
 // ctx.putImageData(previous_canvas, 0,0);
 

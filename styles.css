@@ -1,9 +1,10 @@
-#saliency_map {
+#saliency_map, #output_image {
     border:1px solid red;
     width: 500px;
     height: 500px;
     /* margin-left:25%; */
 }
+
 
 h1 {
     color:red;
