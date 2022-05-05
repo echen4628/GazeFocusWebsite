@@ -44,19 +44,20 @@ class Saliency_Map {
         console.log(region.points);
         this.num_regions++;
         console.log(this.saliency);
-        let mat = cv.matFromArray(this.height, this.width, cv.CV_8UC1, (this.saliency).flat());
+        let mat = cv.matFromArray(this.width, this.height, cv.CV_8UC1, (this.saliency).flat());
         console.log("this is the matrix")
         console.log(mat.data);
-        let vertices = cv.matFromArray(region.points.length, 1, cv.CV_32SC2, region.points.flat());
+        let vertices = cv.matFromArray(region.points.length, 1, cv.CV_32SC2, (region.points).flat());
         let pts = new cv.MatVector();
         pts.push_back(vertices);
         let color = new cv.Scalar(this.level);
         cv.fillPoly(mat, pts, color);
-        console.log(mat.data);
-        this.reshape(mat.data.slice(0, mat.data.length));
+        console.log(Array.from(mat.data));
+        // this.reshape(mat.data.slice(0, mat.data.length));
+        this.reshape(Array.from(mat.data));
+        vertices.delete();
         pts.delete();
         mat.delete();
-        
     }
 
     // push(region){
@@ -124,15 +125,14 @@ class Saliency_Map {
     }
 
     saturation_transform(input_image) {
+        let output_image = structuredClone(input_image);
         console.log("changing saturation");
-        if (!this.blurred_saliency) {
-            this.blur();
-        }
+        this.blur();
         for (let pixel = 0; pixel < this.height*this.width; pixel++){
             let canvas_pixel = pixel*4;
-            let R = input_image.data[canvas_pixel];
-            let G = input_image.data[canvas_pixel+1];
-            let B = input_image.data[canvas_pixel+2];
+            let R = output_image.data[canvas_pixel];
+            let G = output_image.data[canvas_pixel+1];
+            let B = output_image.data[canvas_pixel+2];
 
             // convert to lab
             let [l,a,b] = this.rgb2lab([R,G,B]);
@@ -143,11 +143,11 @@ class Saliency_Map {
             [R,G,B] = this.lab2rgb([l,a,b]);
 
             // convert back to rgb
-            input_image.data[canvas_pixel] = R;
-            input_image.data[canvas_pixel+1] = G;
-            input_image.data[canvas_pixel+2] = B;
+            output_image.data[canvas_pixel] = R;
+            output_image.data[canvas_pixel+1] = G;
+            output_image.data[canvas_pixel+2] = B;
         }
-        return input_image;
+        return output_image;
     }
 
     contrast_transform(input_image) {
@@ -225,11 +225,11 @@ class Saliency_Map {
 
 // map = new Saliency_Map(10,11);
 // point1 = new Point();
-// point1.points = [[9,10], [2,1], [3,4]];
-// // point2 = new Point();
-// // point2.points = [[4,4], [6,4], [9,7]];
+// point1.points = [[0,0], [2,1], [3,4]];
+// point2 = new Point();
+// point2.points = [[9,9], [7,9], [9,7]];
 // console.log(`point1.points: ${point1.points[0]}`);
-// // let mat1 = map.push(point1);
-// // console.log(map.saliency);
-// // let mat2 = map.push(point2);
+// let mat1 = map.push(point1);
+// console.log(map.saliency);
+// let mat2 = map.push(point2);
 // console.log(map.saliency);

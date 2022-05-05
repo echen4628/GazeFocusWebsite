@@ -144,7 +144,6 @@ let draw = false;
 // Input and output
 let original = new ImageData(canvas.width, canvas.height);
 
-
 imageInput.addEventListener("change", (e) => {
     if(e.target.files) {
         let file = e.target.files[0];
@@ -211,7 +210,11 @@ function displayOutput() {
         console.log("hatching");
     } else if (method_menu.value == "Blurring") {
         console.log("blurring");
-    } else {
+    } else if (method_menu.value == "Original"){
+        output_image = original;
+        console.log("original");
+    }
+    else {
         console.log(`${method_menu.value} has not been implemented`);
     }
     output_ctx.putImageData(output_image, 0, 0);
