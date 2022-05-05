@@ -9,105 +9,105 @@
 
 
 // -------------------- Start of Point class ---------------
-class Point{
-    constructor(){
-        this.points = new Array();
-        this.firstpoint = true;
-    }
+// class Point{
+//     constructor(){
+//         this.points = new Array();
+//         this.firstpoint = true;
+//     }
 
-    draw(ctx,x,y){
-        if (this.firstpoint){
-            ctx.moveTo(x,y);
-            this.firstpoint = false;
-        }
-        else{
-            ctx.lineTo(x,y);
-        }
-        ctx.stroke();
-        ctx.moveTo(x,y);
-        this.points.push([x,y]);
-    }
+//     draw(ctx,x,y){
+//         if (this.firstpoint){
+//             ctx.moveTo(x,y);
+//             this.firstpoint = false;
+//         }
+//         else{
+//             ctx.lineTo(x,y);
+//         }
+//         ctx.stroke();
+//         ctx.moveTo(x,y);
+//         this.points.push([x,y]);
+//     }
 
-    finish(ctx){
-        console.log("finishing");
-        ctx.lineTo(this.points[0][0], this.points[0][1]);
-        ctx.stroke();
+//     finish(ctx){
+//         console.log("finishing");
+//         ctx.lineTo(this.points[0][0], this.points[0][1]);
+//         ctx.stroke();
 
-    }
-}
+//     }
+// }
 
-// ------------------- Start of Saliency Map class ---------------------
+// // ------------------- Start of Saliency Map class ---------------------
 
-class Map {
-    constructor(width, height){
-        this.width = width;
-        this.height = height;
-        // should use this.saliency(y,x); x indicates col, so should go second
-        this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(0));
-        this.regions = {};
-        this.num_regions = 1;
-    }
+// class Map {
+//     constructor(width, height){
+//         this.width = width;
+//         this.height = height;
+//         // should use this.saliency(y,x); x indicates col, so should go second
+//         this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(0));
+//         this.regions = {};
+//         this.num_regions = 1;
+//     }
 
-    connectPoints(x1,y1,x2,y2) {
-        let dx = x2 - x1;
-        let dy = y2 - y1;
-        if( dx < 0 & dy < 0) {
-            let temp = x1;
-            x1 = x2;
-            x2 = temp;
-            temp = y1;
-            y1 = y2;
-            y2 = temp;
-            dx = x2 - x1;
-            dy = y2-y1;
-        }
-        let steps = dx>dy ? dx : dy;
-        let xinc = dx/steps;
-        let yinc = dy/steps;
-        console.log(`dx: ${dx}; dy: ${dy}`);
-        let x = x1;
-        let y = y1;
-        for (let i = 0; i<steps+1; i++){
-            // console.log(`(${x}, ${y})`);
-            // console.log(`trying to change ${this.saliency[parseInt(y)][parseInt(x)]}`);
-            this.saliency[parseInt(y)][parseInt(x)] = 1;
-            x+=xinc;
-            y+=yinc;
-        }
-    }
+//     connectPoints(x1,y1,x2,y2) {
+//         let dx = x2 - x1;
+//         let dy = y2 - y1;
+//         if( dx < 0 & dy < 0) {
+//             let temp = x1;
+//             x1 = x2;
+//             x2 = temp;
+//             temp = y1;
+//             y1 = y2;
+//             y2 = temp;
+//             dx = x2 - x1;
+//             dy = y2-y1;
+//         }
+//         let steps = dx>dy ? dx : dy;
+//         let xinc = dx/steps;
+//         let yinc = dy/steps;
+//         console.log(`dx: ${dx}; dy: ${dy}`);
+//         let x = x1;
+//         let y = y1;
+//         for (let i = 0; i<steps+1; i++){
+//             // console.log(`(${x}, ${y})`);
+//             // console.log(`trying to change ${this.saliency[parseInt(y)][parseInt(x)]}`);
+//             this.saliency[parseInt(y)][parseInt(x)] = 1;
+//             x+=xinc;
+//             y+=yinc;
+//         }
+//     }
 
-    push(region){
-        this.regions[this.num_regions] = region;
-        console.log(region.points);
-        this.num_regions++;
-        for (let i=0; i< region.points.length; i++){
-            // console.log(`Currently starting with point ${i}`);
-            this.connectPoints(region.points[i][0], region.points[i][1], region.points[(i+1)%region.points.length][0], region.points[(i+1)%region.points.length][1]);
-        }
-    }
+//     push(region){
+//         this.regions[this.num_regions] = region;
+//         console.log(region.points);
+//         this.num_regions++;
+//         for (let i=0; i< region.points.length; i++){
+//             // console.log(`Currently starting with point ${i}`);
+//             this.connectPoints(region.points[i][0], region.points[i][1], region.points[(i+1)%region.points.length][0], region.points[(i+1)%region.points.length][1]);
+//         }
+//     }
 
-    fill(ctx, x, y){
-        x = parseInt(x);
-        y = parseInt(y);
-        if (this.saliency[y][x] == 1 || y < 0 || y > this.height-1 || x < 0 || x > this.width-1){
-            return;
-        }
-        else {
-            this.saliency[y][x] = 1;
-            ctx.fillRect(x,y,1,1);
-            this.fill(ctx, x+1, y);
-            this.fill(ctx, x-1, y);
-            this.fill(ctx, x, y+1);
-            this.fill(ctx, x, y-1);
-            return;
-        }
-    }
+//     fill(ctx, x, y){
+//         x = parseInt(x);
+//         y = parseInt(y);
+//         if (this.saliency[y][x] == 1 || y < 0 || y > this.height-1 || x < 0 || x > this.width-1){
+//             return;
+//         }
+//         else {
+//             this.saliency[y][x] = 1;
+//             ctx.fillRect(x,y,1,1);
+//             this.fill(ctx, x+1, y);
+//             this.fill(ctx, x-1, y);
+//             this.fill(ctx, x, y+1);
+//             this.fill(ctx, x, y-1);
+//             return;
+//         }
+//     }
 
-    blur() {
-        console.log("blurring");
-        let mat = cv.matFromArray(2, 2, cv.CV_8UC1, [1, 2, 3, 4]);
-    }
-}
+//     blur() {
+//         console.log("blurring");
+//         let mat = cv.matFromArray(2, 2, cv.CV_8UC1, [1, 2, 3, 4]);
+//     }
+// }
 
 //------------- start of code --------------------
 // Getting elements
@@ -138,7 +138,7 @@ output.width = getComputedStyle(output)['width'].slice(0,-2);
 // Creating buffers
 const allPoints = new Array();
 console.log(`Starting saliency map with width ${canvas.width} and height ${canvas.height}`);
-const saliency_map = new Map(canvas.width, canvas.height);
+const saliency_map = new Saliency_Map(canvas.width, canvas.height);
 let draw = false;
 
 // Input and output
@@ -176,7 +176,7 @@ imageInput.addEventListener("change", (e) => {
 // Setting up all buttons
 start_button.addEventListener("dblclick", () => {addNewPoint()});
 finish_button.addEventListener("dblclick", () => {finishDrawing()});
-fill_button.addEventListener("dblclick", (e) => {fillRegion(e)});
+// fill_button.addEventListener("dblclick", (e) => {fillRegion(e)});
 convert_button.addEventListener("dblclick", ()=> {displayOutput()});
 method_menu.addEventListener("change", (e)=> {
     console.log(method_menu.value);
@@ -196,15 +196,16 @@ function finishDrawing() {
     draw = false;
 }
 
-function fillRegion(e) {
-    fill = true;
-}
+// function fillRegion(e) {
+//     fill = true;
+// }
 
 function displayOutput() {
     console.log("display?!");
     if (method_menu.value == "Contrast"){
         console.log("contrast");
     } else if (method_menu.value == "Saturation"){
+        output_image = saliency_map.saturation_transform(original);
         console.log("saturation");
     } else if (method_menu.value == "Hatching") {
         console.log("hatching");
@@ -213,7 +214,7 @@ function displayOutput() {
     } else {
         console.log(`${method_menu.value} has not been implemented`);
     }
-    output_ctx.putImageData(original, 0, 0);
+    output_ctx.putImageData(output_image, 0, 0);
 }
 
 // allowing user to draw on the canvas
@@ -227,14 +228,14 @@ canvas.addEventListener("click", (e) => {
         current_point= allPoints[allPoints.length - 1];
         current_point.draw(ctx,x,y);
     }
-    else if (fill == true){
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        console.log(`Filling area starting with point ${x}, ${y}.`);
-        saliency_map.fill(ctx,x,y);
-        fill = false;
-    }
+    // else if (fill == true){
+    //     const rect = canvas.getBoundingClientRect();
+    //     const x = e.clientX - rect.left;
+    //     const y = e.clientY - rect.top;
+    //     console.log(`Filling area starting with point ${x}, ${y}.`);
+    //     saliency_map.fill(ctx,x,y);
+    //     fill = false;
+    // }
 })
 
 
