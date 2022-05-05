@@ -161,8 +161,69 @@ class Saliency_Map {
         
     }
 
-    combine() {
+    blur_transform(input_image) {
+        let output_image = structuredClone(input_image);
+        console.log("changing blur");
+        this.blur();
+        let levels = new Array();
+        for (let i = 1; i < this.level; i++){
+            console.log("you are in the for loop");
+            let mat = cv.matFromImageData(input_image);
+            let kernel_size = Math.floor(this.width*(1-(i/this.level))/200)*2+1;
+            console.log(`kernel size: ${kernel_size}`);
+            let dst = new cv.Mat();
+            let ksize = new cv.Size(kernel_size, kernel_size);
+            // You can try more different parameters
+            cv.GaussianBlur(mat, dst, ksize, 0, 0, cv.BORDER_DEFAULT);
+            levels.push(Array.from(dst.data));
+        }
+        levels.push(Array.from(input_image.data));
+        console.log(levels);
+        return this.combine(levels, output_image);
+    }
+
+    hatch_transform(input_image) {
+        let output_image = structuredClone(input_image);
+        let mat = cv.matFromImageData(input_image);
+        let dst = cv.Mat.zeros(this.width, this.height, cv.CV_8UC3);
+        cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY, 0);
+        cv.threshold(mat, mat, 120, 200, cv.THRESH_BINARY);
+        let contours = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+        // You can try more different parameters
+        cv.findContours(mat, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+        // draw contours with random Scalar
+        for (let i = 0; i < contours.size(); ++i) {
+            let color = new cv.Scalar(255, 255, 255);
+            cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+        }
+        let contour_outline = Array.from(dst.data);
+        mat.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+        for (let pixel = 0; pixel < this.height*this.width; pixel++){
+            let canvas_pixel = pixel*4;
+            let outline_pixel = pixel*3;
+            output_image.data[canvas_pixel] = contour_outline[outline_pixel];
+            output_image.data[canvas_pixel+1] = contour_outline[outline_pixel+1];
+            output_image.data[canvas_pixel+2] = contour_outline[outline_pixel+2];
+        }
+        // add circles/ hatches
+        return output_image
+    }
+
+    combine(levels, output_image) {
         // picks the right rgb value from the right layer corresponding to the saliency value.
+        let flat_saliency_map = this.saliency.flat();
+        let temp_level;
+        for (let pixel = 0; pixel < this.height*this.width; pixel++){
+            let canvas_pixel = pixel*4;
+            let pixel_saliency = flat_saliency_map[pixel];
+            temp_level = levels[pixel_saliency-1];
+            output_image.data[canvas_pixel] = temp_level[canvas_pixel];
+            output_image.data[canvas_pixel+1] = temp_level[canvas_pixel+1];
+            output_image.data[canvas_pixel+2] = temp_level[canvas_pixel+2];
+            output_image.data[canvas_pixel+3] = temp_level[canvas_pixel+3];
+        }
+        return output_image;
     }
 
     lab2rgb(lab){

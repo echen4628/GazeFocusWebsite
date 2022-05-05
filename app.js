@@ -207,8 +207,10 @@ function displayOutput() {
         output_image = saliency_map.saturation_transform(original);
         console.log("saturation");
     } else if (method_menu.value == "Hatching") {
+        output_image = saliency_map.hatch_transform(original);
         console.log("hatching");
     } else if (method_menu.value == "Blurring") {
+        output_image = saliency_map.blur_transform(original);
         console.log("blurring");
     } else if (method_menu.value == "Original"){
         output_image = original;
