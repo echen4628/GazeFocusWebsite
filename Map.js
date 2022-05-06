@@ -60,58 +60,6 @@ class Saliency_Map {
         mat.delete();
     }
 
-    // push(region){
-    //     this.regions[this.num_regions] = region;
-    //     console.log(region.points);
-    //     this.num_regions++;
-    //     let mat = this.fill(region);
-    //     this.reshape(mat.data);
-    //     return mat;
-    //     // for (let i=0; i< region.points.length; i++){
-    //     //     // console.log(`Currently starting with point ${i}`);
-    //     //     this.connectPoints(region.points[i][0], region.points[i][1], region.points[(i+1)%region.points.length][0], region.points[(i+1)%region.points.length][1]);
-    //     // }
-    // }
-
-    // fill(region) {
-    //     let mat = cv.matFromArray(this.width, this.height, cv.CV_8UC1, (this.saliency).flat());
-    //     let vertices = cv.matFromArray(region.points.flat().length, 1, cv.CV_32SC2, region.points.flat())
-    //     let pts = new cv.MatVector();
-    //     pts.push_back(vertices);
-    //     let color = new cv.Scalar(this.level);
-    //     cv.fillPoly(mat, pts, color);
-    //     pts.delete();
-    //     console.log("this is mat")
-    //     console.log(mat.data);
-    //     return mat;
-        // let npts = 4;
-        // let square_point_data = new Uint8Array([
-        //     1, 1,
-        //     4, 1,
-        //     4, 4,
-        //     1, 4]);
-        // let square_points = cv.matFromArray(npts, 1, cv.CV_32SC2, square_point_data);
-        // let pts = new cv.MatVector();
-        // pts.push_back (square_points);
-        // let color = new cv.Scalar (255);
-    // }
-    // fill(ctx, x, y){
-    //     x = parseInt(x);
-    //     y = parseInt(y);
-    //     if (this.saliency[y][x] == this.level || y < 0 || y > this.height-1 || x < 0 || x > this.width-1){
-    //         return;
-    //     }
-    //     else {
-    //         this.saliency[y][x] = this.level;
-    //         ctx.fillRect(x,y,1,1);
-    //         this.fill(ctx, x+1, y);
-    //         this.fill(ctx, x-1, y);
-    //         this.fill(ctx, x, y+1);
-    //         this.fill(ctx, x, y-1);
-    //         return;
-    //     }
-    // }
-
     // should only be called once
     blur() {
         console.log("blurring");
@@ -182,7 +130,7 @@ class Saliency_Map {
         return this.combine(levels, output_image);
     }
 
-    hatch_transform(input_image) {
+    dot_transform(input_image) {
         let output_image = structuredClone(input_image);
         let mat = cv.matFromImageData(input_image);
         let dst = cv.Mat.zeros(this.width, this.height, cv.CV_8UC3);
@@ -207,7 +155,58 @@ class Saliency_Map {
             output_image.data[canvas_pixel+2] = contour_outline[outline_pixel+2];
         }
         // add circles/ hatches
-        return output_image
+
+        //create layers, lower saliencies have smaller more sparse circles 
+        // (a percentage of the overall image)
+        let levels = this.create_circles();
+
+        // loop through saliency map, find the value of the corresponding layer, if
+        // the value is a 1, then pick the color off the original image, if the value is a 0
+        // then do nothing
+
+        let flat_saliency_map = this.saliency.flat();
+        let temp_level;
+        for (let pixel = 0; pixel < this.height*this.width; pixel++){
+            let canvas_pixel = pixel*4;
+            let pixel_saliency = flat_saliency_map[pixel];
+            temp_level = levels[pixel_saliency-1];
+            if (temp_level[pixel] === 1){
+                output_image.data[canvas_pixel] = input_image.data[canvas_pixel];
+                output_image.data[canvas_pixel+1] = input_image.data[canvas_pixel+1];
+                output_image.data[canvas_pixel+2] = input_image.data[canvas_pixel+2];
+                output_image.data[canvas_pixel+3] = input_image.data[canvas_pixel+3];
+            }
+        }
+        return output_image;
+    }
+
+    create_circles(){
+        let ones = new Array(this.width*this.height*0.001).fill(1);
+        let zeros = new Array(this.width*this.height*0.999).fill(0);
+        let combined = ones.concat(zeros);
+        let levels = new Array();
+        let radius;
+        let center;
+        let level;
+        let color = new cv.Scalar (1);
+        for (let i = 1; i < this.level; i++){
+            this.shuffleArray(combined);
+            radius = Math.floor(Math.sqrt((i-1)/this.level)/0.01/Math.PI); 
+            console.log(radius);
+            level = new cv.Mat.zeros(this.height, this.width, cv.CV_8UC1);
+            for (let row = 0; row < this.height; row++){
+                for (let col = 0; col < this.width; col++){
+                    if (combined[row*this.width + col] === 1){
+                        center = new cv.Point(col, row);
+                        cv.circle(level, center, radius, color, -1);
+                    }
+                }
+            }
+            // You can try more different parameters
+            levels.push(Array.from(level.data));
+        }
+        levels.push(Array(this.height*this.width).fill(1));
+        return levels;
     }
 
     combine(levels, output_image) {
@@ -281,6 +280,14 @@ class Saliency_Map {
         console.log(temp);
     }
 
+    shuffleArray(array) {
+        for (var i = array.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+    }
 }
 
 
@@ -294,3 +301,22 @@ class Saliency_Map {
 // console.log(map.saliency);
 // let mat2 = map.push(point2);
 // console.log(map.saliency);
+
+
+// b = new Array(625).fill(1);
+// c = new Array(500*500-625).fill(0);
+// d = b.concat(c);
+// shuffleArray(d);
+// let mat2 = cv.Mat.zeros(this.width, this.height, cv.CV_8UC1);
+// for (let row = 0; row < this.height; row++){
+//     for (let col = 0; col < this.width; col++){
+//         if (d[row*this.width + col] === 1){
+//             cv.circle(mat2, (col, row), r, 1, -1)
+//         }
+//     }
+// }
+
+// let center = new cv.Point(5, 5);
+// let img = new cv.Mat.zeros(10, 10, cv.CV_8UC1);
+// let color = new cv.Scalar (1);
+// cv.circle(img, center, 3, color, -1);
