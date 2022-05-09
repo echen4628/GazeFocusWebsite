@@ -3,7 +3,7 @@ class Saliency_Map {
         this.width = width;
         this.height = height;
         // should use this.saliency(y,x); x indicates col, so should go second
-        this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(3));
+        this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(1));
         this.regions = {};
         this.num_regions = 1;
         this.blurred_saliency = null;
@@ -60,15 +60,19 @@ class Saliency_Map {
         mat.delete();
     }
 
-    // should only be called once
+    // calling multiple times does not blur multiple times
     blur() {
         console.log("blurring");
         let mat = cv.matFromArray(this.height, this.width, cv.CV_8UC1, (this.saliency).flat());
         let dst = new cv.Mat();
-        let ksize = new cv.Size(21, 21);
+        let ksize = new cv.Size(321, 321);
         // You can try more different parameters
         cv.GaussianBlur(mat, dst, ksize, 0, 0, cv.BORDER_DEFAULT);
-        this.blurred_saliency = dst;
+        let temp = Array.from(dst.data);
+        let flat = this.saliency.flat()
+        this.blurred_saliency = [...Array(this.width*this.height).keys()].map((idx) => Math.max(temp[idx], flat[idx]));
+        console.log("finished blurring");
+        dst.delete();
         mat.delete();
     }
 
@@ -84,7 +88,7 @@ class Saliency_Map {
 
             // convert to lab
             let [l,a,b] = this.rgb2lab([R,G,B]);
-            let factor = this.blurred_saliency.data[pixel] / this.level;
+            let factor = this.blurred_saliency[pixel] / this.level;
             a = factor * a;
             b = factor * b;
 
@@ -131,6 +135,7 @@ class Saliency_Map {
     }
 
     dot_transform(input_image) {
+        this.blur();
         let output_image = structuredClone(input_image);
         let mat = cv.matFromImageData(input_image);
         let dst = cv.Mat.zeros(this.width, this.height, cv.CV_8UC3);
@@ -164,11 +169,10 @@ class Saliency_Map {
         // the value is a 1, then pick the color off the original image, if the value is a 0
         // then do nothing
 
-        let flat_saliency_map = this.saliency.flat();
         let temp_level;
         for (let pixel = 0; pixel < this.height*this.width; pixel++){
             let canvas_pixel = pixel*4;
-            let pixel_saliency = flat_saliency_map[pixel];
+            let pixel_saliency = this.blurred_saliency[pixel];
             temp_level = levels[pixel_saliency-1];
             if (temp_level[pixel] === 1){
                 output_image.data[canvas_pixel] = input_image.data[canvas_pixel];
@@ -211,11 +215,10 @@ class Saliency_Map {
 
     combine(levels, output_image) {
         // picks the right rgb value from the right layer corresponding to the saliency value.
-        let flat_saliency_map = this.saliency.flat();
         let temp_level;
         for (let pixel = 0; pixel < this.height*this.width; pixel++){
             let canvas_pixel = pixel*4;
-            let pixel_saliency = flat_saliency_map[pixel];
+            let pixel_saliency = this.blurred_saliency[pixel];
             temp_level = levels[pixel_saliency-1];
             output_image.data[canvas_pixel] = temp_level[canvas_pixel];
             output_image.data[canvas_pixel+1] = temp_level[canvas_pixel+1];
@@ -291,7 +294,7 @@ class Saliency_Map {
 }
 
 
-// map = new Saliency_Map(10,11);
+// map = new Saliency_Map(5,5);
 // point1 = new Point();
 // point1.points = [[0,0], [2,1], [3,4]];
 // point2 = new Point();
