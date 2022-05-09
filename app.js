@@ -13,6 +13,10 @@ const convert_button = document.querySelector('#convert');
 
 const method_menu = document.querySelector('#method');
 
+const smooth_level = document.querySelector('#kernel_size');
+const base_saliency = document.querySelector('#base_saliency');
+
+
 // Setting the size of canvas according to css
 console.log(getComputedStyle(canvas)['height']);
 console.log(getComputedStyle(canvas)['width']);
@@ -88,17 +92,19 @@ function finishDrawing() {
 // }
 
 function displayOutput() {
+    let kernel_size = parseInt(smooth_level.value);
+    saliency_map.setBaseSaliency(parseInt(base_saliency.value))
     console.log("display?!");
     if (method_menu.value == "Contrast"){
         console.log("contrast");
     } else if (method_menu.value == "Saturation"){
-        output_image = saliency_map.saturation_transform(original);
+        output_image = saliency_map.saturation_transform(original, kernel_size);
         console.log("saturation");
     } else if (method_menu.value == "Dot") {
-        output_image = saliency_map.dot_transform(original);
+        output_image = saliency_map.dot_transform(original, kernel_size);
         console.log("hatching");
     } else if (method_menu.value == "Blurring") {
-        output_image = saliency_map.blur_transform(original);
+        output_image = saliency_map.blur_transform(original, kernel_size);
         console.log("blurring");
     } else if (method_menu.value == "Original"){
         output_image = original;

@@ -26,6 +26,10 @@
       <option value="Blurring">Blurring</option>
       <option value="Original">Original</option>
     </select>
+    <label for="kernel_size">Smooth Level (odd only)</label>
+    <input type="number" id="kernel_size" value="21">
+    <label for="base_saliency">base_saliency (under 5)</label>
+    <input type="number" id="base_saliency" value="3">
     <canvas id="output_image"></canvas>
     <script src="point.js"></script>
     <script src="Map.js"></script>

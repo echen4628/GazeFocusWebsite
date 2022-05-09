@@ -3,11 +3,19 @@ class Saliency_Map {
         this.width = width;
         this.height = height;
         // should use this.saliency(y,x); x indicates col, so should go second
-        this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(1));
+        this.base_saliency = 3
+        this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(3));
         this.regions = {};
         this.num_regions = 1;
         this.blurred_saliency = null;
         this.level = 5;
+    }
+
+    setBaseSaliency(new_saliency){
+        this.saliency = this.saliency.map((arr) => arr.map((x) => x === this.base_saliency ? new_saliency : x));
+        // this.saliency.map((arr) => arr.map((x) => console.log(x===this.base_saliency)));
+        this.base_saliency = new_saliency;
+        console.log(this.base_saliency);
     }
 
     connectPoints(x1,y1,x2,y2) {
@@ -61,11 +69,11 @@ class Saliency_Map {
     }
 
     // calling multiple times does not blur multiple times
-    blur() {
+    blur(kernel_size) {
         console.log("blurring");
         let mat = cv.matFromArray(this.height, this.width, cv.CV_8UC1, (this.saliency).flat());
         let dst = new cv.Mat();
-        let ksize = new cv.Size(321, 321);
+        let ksize = new cv.Size(kernel_size, kernel_size);
         // You can try more different parameters
         cv.GaussianBlur(mat, dst, ksize, 0, 0, cv.BORDER_DEFAULT);
         let temp = Array.from(dst.data);
@@ -76,10 +84,10 @@ class Saliency_Map {
         mat.delete();
     }
 
-    saturation_transform(input_image) {
+    saturation_transform(input_image, kernel_size) {
         let output_image = structuredClone(input_image);
         console.log("changing saturation");
-        this.blur();
+        this.blur(kernel_size);
         for (let pixel = 0; pixel < this.height*this.width; pixel++){
             let canvas_pixel = pixel*4;
             let R = output_image.data[canvas_pixel];
@@ -113,10 +121,10 @@ class Saliency_Map {
         
     }
 
-    blur_transform(input_image) {
+    blur_transform(input_image, kernel_size) {
         let output_image = structuredClone(input_image);
         console.log("changing blur");
-        this.blur();
+        this.blur(kernel_size);
         let levels = new Array();
         for (let i = 1; i < this.level; i++){
             console.log("you are in the for loop");
@@ -134,8 +142,8 @@ class Saliency_Map {
         return this.combine(levels, output_image);
     }
 
-    dot_transform(input_image) {
-        this.blur();
+    dot_transform(input_image, kernel_size) {
+        this.blur(kernel_size);
         let output_image = structuredClone(input_image);
         let mat = cv.matFromImageData(input_image);
         let dst = cv.Mat.zeros(this.width, this.height, cv.CV_8UC3);
@@ -195,7 +203,7 @@ class Saliency_Map {
         let color = new cv.Scalar (1);
         for (let i = 1; i < this.level; i++){
             this.shuffleArray(combined);
-            radius = Math.floor(Math.sqrt((i-1)/this.level)/0.01/Math.PI); 
+            radius = Math.floor(Math.sqrt((i-1)/this.level)/0.0001/Math.PI); 
             console.log(radius);
             level = new cv.Mat.zeros(this.height, this.width, cv.CV_8UC1);
             for (let row = 0; row < this.height; row++){
