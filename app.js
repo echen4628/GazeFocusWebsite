@@ -9,7 +9,6 @@ const output_ctx = output.getContext("2d");
 
 const start_button = document.querySelector("#start");
 const finish_button = document.querySelector("#finish");
-const fill_button = document.querySelector("#fill");
 const convert_button = document.querySelector('#convert');
 
 const method_menu = document.querySelector('#method');
@@ -23,13 +22,11 @@ let original;
 let saliency_map;
 
 function initialization(){
-    // Setting the size of canvas according to css
     console.log(getComputedStyle(canvas)['height']);
     console.log(getComputedStyle(canvas)['width']);
-    // canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
-    // canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
     console.log(canvas.height,canvas.width);
 
+    // Setting the size of the output canvas according to the saliency map canvas
     output.height = getComputedStyle(canvas)['height'].slice(0,-2);
     output.width = getComputedStyle(canvas)['width'].slice(0,-2);
 
@@ -37,9 +34,6 @@ function initialization(){
     console.log(`Starting saliency map with width ${canvas.width} and height ${canvas.height}`);
     saliency_map = new Saliency_Map(canvas.width, canvas.height);
     draw = false;
-
-    // Input and output
-    // original = new ImageData(canvas.width, canvas.height);
 }
 
 
@@ -54,42 +48,21 @@ imageInput.addEventListener("change", (e) => {
             image.onload = function(e) {
                 canvas.width = image.width;
                 canvas.height = image.height;
-                console.dir(image);
-                // image.width = canvas.width;
-                // image.height = canvas.height;
-                // canvas.width=image.width;
-                // canvas.height = image.height;
+ 
                 ctx.drawImage(image, 0, 0);
                 console.log(`canvas width is ${canvas.width} and canvas height is ${canvas.height}`);
                 original = ctx.getImageData(0,0,canvas.width, canvas.height);
                 initialization();
-                // canvas.height = rect.top-rect.bot;
-                // console.log(`canvas width is ${canvas.width} and canvas height is ${canvas.height}`);
-                // rect = canvas.getBoundingClientRect();
-                // console.log(`canvas width is ${rect.right-rect.left}`);
+
             }
         }
     }
 });
 
-
-// imageInput.addEventListener('change', (e) => {
-//     let imgElement = document.createElement("img");
-//     imgElement.src = URL.createObjectURL(e.target.files[0]);
-//     imgElement.width = 500;
-//     imgElement.height = 500;
-//     let mat = cv.imread(imgElement);
-//     initialization();
-
-//     cv.imshow('#saliency_map', mat);
-//     cv.imshow('#output_image', mat);
-//     mat.delete();
-// });
-
 // Setting up all buttons
 start_button.addEventListener("dblclick", () => {addNewPoint()});
 finish_button.addEventListener("dblclick", () => {finishDrawing()});
-// fill_button.addEventListener("dblclick", (e) => {fillRegion(e)});
+
 convert_button.addEventListener("dblclick", ()=> {displayOutput()});
 method_menu.addEventListener("change", (e)=> {
     console.log(method_menu.value);
@@ -102,24 +75,16 @@ function addNewPoint() {
 }
 
 function finishDrawing() {
-    console.log("hi");
     current_point = allPoints[allPoints.length-1];
     current_point.finish(ctx);
     saliency_map.push(current_point);
     draw = false;
 }
 
-// function fillRegion(e) {
-//     fill = true;
-// }
-
 function displayOutput() {
     let kernel_size = parseInt(smooth_level.value);
     saliency_map.setBaseSaliency(parseInt(base_saliency.value))
-    console.log("display?!");
-    if (method_menu.value == "Contrast"){
-        console.log("contrast");
-    } else if (method_menu.value == "Saturation"){
+    if (method_menu.value == "Saturation"){
         output_image = saliency_map.saturation_transform(original, kernel_size);
         console.log("saturation");
     } else if (method_menu.value == "Dot") {
@@ -151,7 +116,6 @@ canvas.addEventListener("click", (e) => {
     }
 })
 
-
 window.addEventListener("resize", () => {
     console.log(getComputedStyle(canvas)['height']);
     console.log(getComputedStyle(canvas)['width']);
@@ -161,5 +125,3 @@ window.addEventListener("resize", () => {
     ctx.putImageData(previous_canvas, 0,0);
 
 })
-
-

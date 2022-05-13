@@ -2,78 +2,47 @@ class Saliency_Map {
     constructor(width, height){
         this.width = width;
         this.height = height;
-        // should use this.saliency(y,x); x indicates col, so should go second
-        this.base_saliency = 3
+
+        this.base_saliency = 3 // the value this.saliency is set to by default
         this.saliency = new Array(this.height).fill(0).map(() => new Array(this.width).fill(3));
-        this.regions = {};
+        // index as this.saliency(y,x); x indicates col, y indicates row
+
+        this.regions = {}; // a dictionary of all the added saliency regions
         this.num_regions = 1;
         this.blurred_saliency = null;
-        this.level = 5;
+        this.level = 5; // levels of saliency, sets the highest saliency value to this level.
     }
 
     setBaseSaliency(new_saliency){
+        // replaces base values in the this.saliency matrix
         this.saliency = this.saliency.map((arr) => arr.map((x) => x === this.base_saliency ? new_saliency : x));
-        // this.saliency.map((arr) => arr.map((x) => console.log(x===this.base_saliency)));
         this.base_saliency = new_saliency;
-        console.log(this.base_saliency);
     }
-
-    connectPoints(x1,y1,x2,y2) {
-        let dx = x2 - x1;
-        let dy = y2 - y1;
-        if( dx < 0 & dy < 0) {
-            let temp = x1;
-            x1 = x2;
-            x2 = temp;
-            temp = y1;
-            y1 = y2;
-            y2 = temp;
-            dx = x2 - x1;
-            dy = y2-y1;
-        }
-        let steps = dx>dy ? dx : dy;
-        let xinc = dx/steps;
-        let yinc = dy/steps;
-        console.log(`dx: ${dx}; dy: ${dy}`);
-        let x = x1;
-        let y = y1;
-        for (let i = 0; i<steps+1; i++){
-            // console.log(`(${x}, ${y})`);
-            // console.log(`trying to change ${this.saliency[parseInt(y)][parseInt(x)]}`);
-            this.saliency[parseInt(y)][parseInt(x)] = 1;
-            x+=xinc;
-            y+=yinc;
-        }
-    }
-
 
     push(region){
+        // accepts a list of x,y pixel value pairs; adds and fills that region in the saliency map
         this.regions[this.num_regions] = region;
-        console.log(region.points);
         this.num_regions++;
-        console.log(this.saliency);
         let mat = cv.matFromArray(this.width, this.height, cv.CV_8UC1, (this.saliency).flat());
-        console.log("this is the matrix")
-        console.log(mat.data);
         let vertices = cv.matFromArray(region.points.length, 1, cv.CV_32SC2, (region.points).flat());
         let pts = new cv.MatVector();
         pts.push_back(vertices);
         let color = new cv.Scalar(this.level);
         cv.fillPoly(mat, pts, color);
-        console.log(Array.from(mat.data));
-        // this.reshape(mat.data.slice(0, mat.data.length));
         this.reshape(Array.from(mat.data));
         vertices.delete();
         pts.delete();
         mat.delete();
     }
 
-    // calling multiple times does not blur multiple times
     blur(kernel_size) {
+        // a gaussian blur; calling multiple times will not blur multiple times
+        // keeps the pixels with max saliency the same
         console.log("blurring");
         let mat = cv.matFromArray(this.height, this.width, cv.CV_8UC1, (this.saliency).flat());
         let dst = new cv.Mat();
         let ksize = new cv.Size(kernel_size, kernel_size);
+
         // You can try more different parameters
         cv.GaussianBlur(mat, dst, ksize, 0, 0, cv.BORDER_DEFAULT);
         let temp = Array.from(dst.data);
@@ -85,6 +54,7 @@ class Saliency_Map {
     }
 
     saturation_transform(input_image, kernel_size) {
+        // desaturates nonsalient regions of the image
         let output_image = structuredClone(input_image);
         console.log("changing saturation");
         this.blur(kernel_size);
@@ -110,18 +80,8 @@ class Saliency_Map {
         return output_image;
     }
 
-    contrast_transform(input_image) {
-        console.log("changing contrast");
-        let contrast_levels = {};
-        for (let level = 0; level < this.level; level++) {
-            current_level = new Array(this.height*this.width);
-            // call change constrast on input_image
-            contrast_levels[level] = current_level;
-        }
-        
-    }
-
     blur_transform(input_image, kernel_size) {
+        // blurs nonsalient regions of the image
         let output_image = structuredClone(input_image);
         console.log("changing blur");
         this.blur(kernel_size);
@@ -133,7 +93,6 @@ class Saliency_Map {
             console.log(`kernel size: ${kernel_size}`);
             let dst = new cv.Mat();
             let ksize = new cv.Size(kernel_size, kernel_size);
-            // You can try more different parameters
             cv.GaussianBlur(mat, dst, ksize, 0, 0, cv.BORDER_DEFAULT);
             levels.push(Array.from(dst.data));
         }
@@ -143,7 +102,11 @@ class Saliency_Map {
     }
 
     dot_transform(input_image, kernel_size) {
+        // changes nonsalient regions of the image to dots and draws contour 
+        // of the original image
         this.blur(kernel_size);
+
+        // drawing contour
         let output_image = structuredClone(input_image);
         let mat = cv.matFromImageData(input_image);
         let dst = cv.Mat.zeros(this.width, this.height, cv.CV_8UC3);
@@ -160,6 +123,7 @@ class Saliency_Map {
         }
         let contour_outline = Array.from(dst.data);
         mat.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+
         for (let pixel = 0; pixel < this.height*this.width; pixel++){
             let canvas_pixel = pixel*4;
             let outline_pixel = pixel*3;
@@ -167,7 +131,8 @@ class Saliency_Map {
             output_image.data[canvas_pixel+1] = contour_outline[outline_pixel+1];
             output_image.data[canvas_pixel+2] = contour_outline[outline_pixel+2];
         }
-        // add circles/ hatches
+
+        // drawing circles
 
         //create layers, lower saliencies have smaller more sparse circles 
         // (a percentage of the overall image)
@@ -193,6 +158,7 @@ class Saliency_Map {
     }
 
     create_circles(){
+        // draws a layer of circles for each saliency value
         let ones = new Array(this.width*this.height*0.001).fill(1);
         let zeros = new Array(this.width*this.height*0.999).fill(0);
         let combined = ones.concat(zeros);
@@ -214,7 +180,6 @@ class Saliency_Map {
                     }
                 }
             }
-            // You can try more different parameters
             levels.push(Array.from(level.data));
         }
         levels.push(Array(this.height*this.width).fill(1));
@@ -237,6 +202,7 @@ class Saliency_Map {
     }
 
     lab2rgb(lab){
+        // taken from https://github.com/antimatter15/rgb-lab
         let y = (lab[0] + 16) / 116,
             x = lab[1] / 500 + y,
             z = y - lab[2] / 200,
@@ -261,6 +227,7 @@ class Saliency_Map {
       
       
     rgb2lab(rgb){
+        // taken from https://github.com/antimatter15/rgb-lab
         let r = rgb[0] / 255,
             g = rgb[1] / 255,
             b = rgb[2] / 255,
@@ -282,6 +249,7 @@ class Saliency_Map {
       }
 
     reshape(mat) {
+        // reshapes a float array into a saliency map of specified dimensions
         console.log(mat);
         let temp = new Array();
         for (let x = 0; x < this.height* this.width; x = x + this.width) {
@@ -300,34 +268,3 @@ class Saliency_Map {
         }
     }
 }
-
-
-// map = new Saliency_Map(5,5);
-// point1 = new Point();
-// point1.points = [[0,0], [2,1], [3,4]];
-// point2 = new Point();
-// point2.points = [[9,9], [7,9], [9,7]];
-// console.log(`point1.points: ${point1.points[0]}`);
-// let mat1 = map.push(point1);
-// console.log(map.saliency);
-// let mat2 = map.push(point2);
-// console.log(map.saliency);
-
-
-// b = new Array(625).fill(1);
-// c = new Array(500*500-625).fill(0);
-// d = b.concat(c);
-// shuffleArray(d);
-// let mat2 = cv.Mat.zeros(this.width, this.height, cv.CV_8UC1);
-// for (let row = 0; row < this.height; row++){
-//     for (let col = 0; col < this.width; col++){
-//         if (d[row*this.width + col] === 1){
-//             cv.circle(mat2, (col, row), r, 1, -1)
-//         }
-//     }
-// }
-
-// let center = new cv.Point(5, 5);
-// let img = new cv.Mat.zeros(10, 10, cv.CV_8UC1);
-// let color = new cv.Scalar (1);
-// cv.circle(img, center, 3, color, -1);
