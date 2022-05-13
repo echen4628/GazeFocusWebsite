@@ -3,6 +3,7 @@ const canvas = document.querySelector("#saliency_map");
 const ctx = canvas.getContext("2d");
 const imageInput = document.querySelector("#imageInput");
 
+
 const output = document.querySelector("#output_image");
 const output_ctx = output.getContext("2d");
 
@@ -16,25 +17,31 @@ const method_menu = document.querySelector('#method');
 const smooth_level = document.querySelector('#kernel_size');
 const base_saliency = document.querySelector('#base_saliency');
 
-
-// Setting the size of canvas according to css
-console.log(getComputedStyle(canvas)['height']);
-console.log(getComputedStyle(canvas)['width']);
-canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
-canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
-console.log(canvas.height,canvas.width);
-
-output.height = getComputedStyle(output)['height'].slice(0,-2);
-output.width = getComputedStyle(output)['width'].slice(0,-2);
-
-// Creating buffers
 const allPoints = new Array();
-console.log(`Starting saliency map with width ${canvas.width} and height ${canvas.height}`);
-const saliency_map = new Saliency_Map(canvas.width, canvas.height);
 let draw = false;
+let original;
+let saliency_map;
 
-// Input and output
-let original = new ImageData(canvas.width, canvas.height);
+function initialization(){
+    // Setting the size of canvas according to css
+    console.log(getComputedStyle(canvas)['height']);
+    console.log(getComputedStyle(canvas)['width']);
+    // canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
+    // canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
+    console.log(canvas.height,canvas.width);
+
+    output.height = getComputedStyle(canvas)['height'].slice(0,-2);
+    output.width = getComputedStyle(canvas)['width'].slice(0,-2);
+
+    // Creating buffers
+    console.log(`Starting saliency map with width ${canvas.width} and height ${canvas.height}`);
+    saliency_map = new Saliency_Map(canvas.width, canvas.height);
+    draw = false;
+
+    // Input and output
+    // original = new ImageData(canvas.width, canvas.height);
+}
+
 
 imageInput.addEventListener("change", (e) => {
     if(e.target.files) {
@@ -45,16 +52,17 @@ imageInput.addEventListener("change", (e) => {
             let image = new Image();
             image.src = e.target.result
             image.onload = function(e) {
-                // canvas.width = image.width;
+                canvas.width = image.width;
+                canvas.height = image.height;
                 console.dir(image);
-                image.width = canvas.width;
-                image.height = canvas.height;
+                // image.width = canvas.width;
+                // image.height = canvas.height;
                 // canvas.width=image.width;
                 // canvas.height = image.height;
                 ctx.drawImage(image, 0, 0);
                 console.log(`canvas width is ${canvas.width} and canvas height is ${canvas.height}`);
                 original = ctx.getImageData(0,0,canvas.width, canvas.height);
-
+                initialization();
                 // canvas.height = rect.top-rect.bot;
                 // console.log(`canvas width is ${canvas.width} and canvas height is ${canvas.height}`);
                 // rect = canvas.getBoundingClientRect();
@@ -63,6 +71,20 @@ imageInput.addEventListener("change", (e) => {
         }
     }
 });
+
+
+// imageInput.addEventListener('change', (e) => {
+//     let imgElement = document.createElement("img");
+//     imgElement.src = URL.createObjectURL(e.target.files[0]);
+//     imgElement.width = 500;
+//     imgElement.height = 500;
+//     let mat = cv.imread(imgElement);
+//     initialization();
+
+//     cv.imshow('#saliency_map', mat);
+//     cv.imshow('#output_image', mat);
+//     mat.delete();
+// });
 
 // Setting up all buttons
 start_button.addEventListener("dblclick", () => {addNewPoint()});

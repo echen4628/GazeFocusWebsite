@@ -1,7 +1,7 @@
 #saliency_map, #output_image {
     border:1px solid red;
-    width: 500px;
-    height: 500px;
+    /* width: 500px;
+    height: 500px; */
     /* margin-left:25%; */
 }
 

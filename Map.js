@@ -203,7 +203,7 @@ class Saliency_Map {
         let color = new cv.Scalar (1);
         for (let i = 1; i < this.level; i++){
             this.shuffleArray(combined);
-            radius = Math.floor(Math.sqrt((i-1)/this.level)/0.0001/Math.PI); 
+            radius = Math.floor(Math.sqrt((i-1)/this.level)/0.01/Math.PI); 
             console.log(radius);
             level = new cv.Mat.zeros(this.height, this.width, cv.CV_8UC1);
             for (let row = 0; row < this.height; row++){
