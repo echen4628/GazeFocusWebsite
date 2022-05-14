@@ -5,6 +5,7 @@ class Point{
     }
 
     draw(ctx,x,y){
+        // connects the last point to the newly added point (x,y)
         if (this.firstpoint){
             ctx.moveTo(x,y);
             this.firstpoint = false;
@@ -18,6 +19,7 @@ class Point{
     }
 
     finish(ctx){
+        // connects from the last point to the first point.
         console.log("finishing");
         ctx.lineTo(this.points[0][0], this.points[0][1]);
         ctx.stroke();

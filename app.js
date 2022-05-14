@@ -62,19 +62,20 @@ imageInput.addEventListener("change", (e) => {
 // Setting up all buttons
 start_button.addEventListener("dblclick", () => {addNewPoint()});
 finish_button.addEventListener("dblclick", () => {finishDrawing()});
-
 convert_button.addEventListener("dblclick", ()=> {displayOutput()});
 method_menu.addEventListener("change", (e)=> {
     console.log(method_menu.value);
 })
 
 function addNewPoint() {
+    // create a new Point object, which can hold all the points of a region
     current_point = new Point();
     allPoints.push(current_point);
     draw = true;
 }
 
 function finishDrawing() {
+    // closes of the region and adds it to the saliency map
     current_point = allPoints[allPoints.length-1];
     current_point.finish(ctx);
     saliency_map.push(current_point);
@@ -82,6 +83,7 @@ function finishDrawing() {
 }
 
 function displayOutput() {
+    // logic for menu
     let kernel_size = parseInt(smooth_level.value);
     saliency_map.setBaseSaliency(parseInt(base_saliency.value))
     if (method_menu.value == "Saturation"){
@@ -116,12 +118,13 @@ canvas.addEventListener("click", (e) => {
     }
 })
 
-window.addEventListener("resize", () => {
-    console.log(getComputedStyle(canvas)['height']);
-    console.log(getComputedStyle(canvas)['width']);
-    canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
-    canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
-    console.log(canvas.height,canvas.width);
-    ctx.putImageData(previous_canvas, 0,0);
+// do not resize the window
+// window.addEventListener("resize", () => {
+//     console.log(getComputedStyle(canvas)['height']);
+//     console.log(getComputedStyle(canvas)['width']);
+//     canvas.height = getComputedStyle(canvas)['height'].slice(0,-2);
+//     canvas.width = getComputedStyle(canvas)['width'].slice(0,-2);
+//     console.log(canvas.height,canvas.width);
+//     ctx.putImageData(previous_canvas, 0,0);
 
-})
+// })
