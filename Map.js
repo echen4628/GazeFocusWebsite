@@ -201,8 +201,11 @@ class Saliency_Map {
         return output_image;
     }
 
+    // The following two functions were written by Kevin Kwok (antimatter15)
+    // and can be found here: https://github.com/antimatter15/rgb-lab. This 
+    // code is covered under MIT license
     lab2rgb(lab){
-        // taken from https://github.com/antimatter15/rgb-lab
+        // taken from 
         let y = (lab[0] + 16) / 116,
             x = lab[1] / 500 + y,
             z = y - lab[2] / 200,
@@ -227,7 +230,6 @@ class Saliency_Map {
       
       
     rgb2lab(rgb){
-        // taken from https://github.com/antimatter15/rgb-lab
         let r = rgb[0] / 255,
             g = rgb[1] / 255,
             b = rgb[2] / 255,

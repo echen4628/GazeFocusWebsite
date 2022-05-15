@@ -12,3 +12,6 @@ The two parameters that may be tuned are "Smooth Level" and "Base Saliency." Smo
 * Point.js - a class that stores and manages a series of points meant to be the contour of a region
 * Map.js - a class that stores and manages all important regions of an image and has functions that applies styles to the image
 * opencv.js - dependency
+
+### Citation
+The lab2rgb and rgb2lab functions in Map.js were written by Kevin Kwok (antimatter15) and can be found here: https://github.com/antimatter15/rgb-lab. This code is covered under MIT license. 
